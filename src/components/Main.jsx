@@ -78,10 +78,47 @@ function Main() {
         setApiURL(finalURL);
     }
 
+    const getResizedImg = (url) => {
+        axios
+            .get(url, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    "Access-Control-Allow-Origin": "*"
+                }
+            })
+            .then((response) => {
+                console.log('Resized Image Fetched successfully!', response.data);
+                setAlertMsg("Resized Image Received!");
+                setAlertSeverity("success")
+                setOpenSnackbar(true);
+                //ADD DISPLAY FOR THE URLS
+            })
+            .catch((error) => {
+                console.error('Error Fetching the resized image:', error);
+                setAlertMsg("Problem Fetching the resized image...");
+                setAlertSeverity("error")
+                setOpenSnackbar(true);
+            });
+    }
+
     const getResizedUrls = () => {
         let baseResizedUrl = 'https://sgm31cynbh.execute-api.eu-west-1.amazonaws.com/dev/thumbnails-source-bucket-resized/';
-        // baseResizedUrl +=
-        // sizes.forEach(size)
+        const sizesArr = [];
+        for (const key in sizes) {
+            if (sizes[key] === true) {
+                const numericKey = Number(key);
+                if (!isNaN(numericKey)) {
+                    sizesArr.push(numericKey);
+                }
+            }
+        }
+        let resizedURL = [];
+        sizesArr.forEach(size => {
+            let fileName = getFileWithNoExtension(image.name);
+            let fileExtension = getFileExtension(image.name);
+            resizedURL.push([baseResizedUrl, fileName, '-', size, '.', fileExtension].join(''))
+        });
+        resizedURL.forEach(url => getResizedImg(url))
     }
 
     const handleSubmit = () => {
@@ -92,7 +129,7 @@ function Main() {
         console.log("image is: ", image)
         console.log("API URL : ", apiURL)
         let fileExtension = getFileExtension(image.name);
-        if(fileExtension === 'jpg')
+        if (fileExtension === 'jpg')
             fileExtension = "jpeg"
         axios
             .put(apiURL, image,
@@ -107,8 +144,7 @@ function Main() {
                 setAlertMsg("Image uploaded successfully!");
                 setAlertSeverity("success")
                 setOpenSnackbar(true);
-                //CALL THE GET ON LINK WITH PRESIGNED URL FOR setState for 'urlResponse'
-                if (response.status === 200){
+                if (response.status === 200) {
                     setTimeout(getResizedUrls, 2000);
                 }
             })
@@ -149,7 +185,7 @@ function Main() {
         <div className="Main">
             <Snackbar
                 open={openSnackbar}
-                autoHideDuration={2000}
+                autoHideDuration={3000}
                 onClose={handleCloseSnackbar}
                 anchorOrigin={{
                     vertical: 'top',
