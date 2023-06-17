@@ -23,7 +23,7 @@
 }
 
 .Main {
-  background-color: lightgray;
+  background-color:#282c3c;
   height: 90vh;
   display: flex;
   flex-direction: column;
@@ -33,7 +33,7 @@
 }
 
 .Main-Container {
-  background-color: white;
+  background-color:#282c3c;
   height: 35%;
   width: 75%;
   border-radius: 15px;

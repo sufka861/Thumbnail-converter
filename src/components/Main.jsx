@@ -6,12 +6,13 @@ import { FaCloudUploadAlt, FaCamera, FaGraduationCap } from 'react-icons/fa';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 import Button from 'react-bootstrap/Button';
-
+import { BsArrowClockwise } from 'react-icons/bs';
 
 
 
 const Main = () => {
   let apiURL = '';
+  const [printUrl, setPrintUrl] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [showComponent, setShowComponent] = useState(false);
@@ -41,13 +42,14 @@ const Main = () => {
     setBaseURL('https://sgm31cynbh.execute-api.eu-west-1.amazonaws.com/dev/thumbnails-source-bucket/');
   }, [image])
 
-  useEffect(() => {
-    if (urlResponse)
-      setUrlResponseShow(true);
-    //GET THE PRESIGNED URL LINK ?????
-  }, [urlResponse])
+  // useEffect(() => {
+  //   if (urlResponse)
+  //     setUrlResponseShow(true);
+  //   //GET THE PRESIGNED URL LINK ?????
+  // }, [urlResponse])
 
   const handleChecked = (event, id) => {
+    console.log(sizes);
     setSizes(prevSizes => {
       return {
         ...prevSizes,
@@ -72,7 +74,11 @@ const Main = () => {
   }
 
   const removeDashFromImageName = (imgName) => {
-    return imgName.replace(/-/g, '');
+    console.log(imgName);
+    let name = imgName.replace(/-/g, '');
+    name = name.replace(/\s/g, '');
+    console.log(name);
+    return name;
   }
 
 
@@ -85,7 +91,13 @@ const Main = () => {
     let fileNameNoExtension = getFileWithNoExtension(fileName);
     const fileExtension = getFileExtension(fileName);
     let fileSizes = "-";
-    // let dot = '.';
+    if (Object.values(sizes).every(value => value === false)) {
+      setSizes({
+        '100': true,
+        '200': false,
+        '300': false
+      })
+    }
     Object.keys(sizes).forEach((item, index, array) => {
       if (sizes[item] === true) {
         fileSizes += ((index + 1).toString())
@@ -158,98 +170,100 @@ const Main = () => {
       if (image) {
         fileName = getFileWithNoExtension(image.name);
         fileExtension = getFileExtension(image.name);
+
       } else {
         fileExtension = getFileExtension(`cameraImg${cameraImgCount}.png`);
         fileName = getFileWithNoExtension(`cameraImg${cameraImgCount}.png`);
       }
       resizedURL.push([baseResizedUrl, fileName, '-', size, '.', fileExtension].join(''))
     });
+
     resizedURL.forEach(url => getResizedImg(url))
   }
 
 
   function getImageSize(imageFile) {
     return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = function () {
-            const width = img.width;
-            const height = img.height;
-            resolve({width, height});
-        };
-        img.onerror = function () {
-            reject(new Error('Failed to load the image'));
-        };
-        const reader = new FileReader();
-        reader.onload = function (event) {
-            img.src = event.target.result;
-        };
-        reader.onerror = function () {
-            reject(new Error('Failed to read the file'));
-        };
-        reader.readAsDataURL(imageFile);
+      const img = new Image();
+      img.onload = function () {
+        const width = img.width;
+        const height = img.height;
+        resolve({ width, height });
+      };
+      img.onerror = function () {
+        reject(new Error('Failed to load the image'));
+      };
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        img.src = event.target.result;
+      };
+      reader.onerror = function () {
+        reject(new Error('Failed to read the file'));
+      };
+      reader.readAsDataURL(imageFile);
     });
-}
-function checkImageSize(imageFile) {
-  return getImageSize(imageFile)
-      .then(({width, height}) => {
-          // console.log(`Image width: ${width}px`);
-          // console.log(`Image height: ${height}px`);
-          if ((sizes[0] && width > sizes[0] && height > sizes[0]) || (!sizes[0] && width > 100 && height > 100)) {
-              return true
-          } else {
-              return false
-          }
+  }
+  function checkImageSize(imageFile) {
+    return getImageSize(imageFile)
+      .then(({ width, height }) => {
+        // console.log(`Image width: ${width}px`);
+        // console.log(`Image height: ${height}px`);
+        if ((sizes[0] && width > sizes[0] && height > sizes[0]) || (!sizes[0] && width > 100 && height > 100)) {
+          return true
+        } else {
+          return false
+        }
       })
       .catch((error) => {
-          console.error('Error:', error.message);
+        console.error('Error:', error.message);
       });
-}
+  }
 
-const handleSubmit = () => {
-  if (!image) {
+  const handleSubmit = () => {
+    if (!image) {
       console.log("ERROR - No image selected");
       return;
-  }
-  console.log("image is: ", image)
-  console.log("API URL : ", apiURL)
-  let fileExtension = getFileExtension(image.name);
-  if (fileExtension === 'jpg')
+    }
+    console.log("image is: ", image)
+    console.log("API URL : ", apiURL)
+    let fileExtension = getFileExtension(image.name);
+    if (fileExtension === 'jpg')
       fileExtension = "jpeg"
 
-  checkImageSize(image)
+    checkImageSize(image)
       .then(r => {
-          console.log("image size is OK")
-          axios
-              .put(apiURL, image,
-                  {
-                      headers: {
-                          'Content-Type': `image/${fileExtension}`,
-                      }
-                  }
-              )
-              .then((response) => {
-                  console.log('Image uploaded successfully!', response.data);
-                  setAlertMsg("Image uploaded successfully!");
-                  setAlertSeverity("success")
-                  setOpenSnackbar(true);
-                  if (response.status === 200) {
-                      setTimeout(getResizedUrls, 2000);
-                  }
-              })
-              .catch((error) => {
-                  console.error('Error uploading image:', error);
-                  setAlertMsg("Problem uploading image...");
-                  setAlertSeverity("error")
-                  setOpenSnackbar(true);
-              });
+        console.log("image size is OK")
+        axios
+          .put(apiURL, image,
+            {
+              headers: {
+                'Content-Type': `image/${fileExtension}`,
+              }
+            }
+          )
+          .then((response) => {
+            console.log('Image uploaded successfully!', response.data);
+            setAlertMsg("Image uploaded successfully!");
+            setAlertSeverity("success")
+            setOpenSnackbar(true);
+            if (response.status === 200) {
+              setTimeout(getResizedUrls, 2000);
+            }
+          })
+          .catch((error) => {
+            console.error('Error uploading image:', error);
+            setAlertMsg("Problem uploading image...");
+            setAlertSeverity("error")
+            setOpenSnackbar(true);
+          });
       })
       .catch(error => {
-          console.error('Error image size smaller than thumbnail', error);
-          setAlertMsg("image size smaller than thumbnail...");
-          setAlertSeverity("error")
-          setOpenSnackbar(true);
+        console.error('Error image size smaller than thumbnail', error);
+        setAlertMsg("image size smaller than thumbnail...");
+        setAlertSeverity("error")
+        setOpenSnackbar(true);
       });
-}
+  }
 
 
   const handleCameraClick = () => {
@@ -260,10 +274,11 @@ const handleSubmit = () => {
     const regex = /\/(.*)/;
     const match = inputString.match(regex);
     return match ? match[1] : inputString;
-}
+  }
 
 
   const handleUpload = (e) => {
+
     setImage(e.target.files[0]);
     handleImageName(e.target.files[0].name);
   };
@@ -276,14 +291,14 @@ const handleSubmit = () => {
   };
   const handleOpenSnackbar = () => {
     setOpenSnackbar(true);
-};
+  };
 
-const handleCloseSnackbar = (event, reason) => {
-  if (reason === 'clickaway') {
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') {
       return;
-  }
-  setOpenSnackbar(false);
-};
+    }
+    setOpenSnackbar(false);
+  };
 
   const handleSubmitCamera = (event) => {
     event.preventDefault();
@@ -326,6 +341,7 @@ const handleCloseSnackbar = (event, reason) => {
     setShowInstructions(false);
     setShowForm(false);
     setShowComponent(false);
+    setOpenSnackbar(false);
   };
 
   const handleClickUpload = () => {
@@ -334,6 +350,7 @@ const handleCloseSnackbar = (event, reason) => {
 
   const handleClickCamera = () => {
     setShowComponent(true);
+    setPrintUrl(true);
   };
 
   useEffect(() => {
@@ -388,8 +405,11 @@ const handleCloseSnackbar = (event, reason) => {
       setAlertMsg("Image uploaded successfully!");
       setAlertSeverity("success")
       setOpenSnackbar(true);
+
       if (response.status === 200) {
+        setUrlResponse(prevResponse => [...prevResponse, response.data]);
         setTimeout(getResizedUrls, 2000);
+
       }
     }).catch(error => {
       console.error('Error uploading image:', error);
@@ -398,142 +418,182 @@ const handleCloseSnackbar = (event, reason) => {
       setOpenSnackbar(true);
     });
   }
+  console.log(urlResponseShow);
+  function refreshPage() {
+    window.location.reload();
+  }
 
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center' }}>
-      {showInstructions ? (
+      {urlResponseShow ? (
         <div style={{ marginTop: '20px' }}>
           <Card handleBackClick={handleBackClick}>
-            <Instructions />
+            <div>
+              <h2>Image Download Links</h2>
+              <div className="urlDownloadLink">
+                {urlResponse.map((url, index) => {
+                  if (printUrl === true && index === 0) {return}
+                 
+                  return (
+                    <a href={url} key={url}>
+                      <Button variant="dark" style={{ marginBottom: "10px" }} className="w-100" key={url}>
+                        Image {index}
+                      </Button>
+                    </a>
+                  );
+                })}
+              </div>
+              <Button variant="warning" onClick={refreshPage}>
+                <BsArrowClockwise color="white" size={20} />
+              </Button>
+            </div>
+
           </Card>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '90vh', alignItems: 'center', justifyContent: 'center' }}>
-          <MainButton handleClick={handleClickUpload} size={buttonSize} icon={<FaCloudUploadAlt size={buttonSize * 0.6} color='#FD9800' />} />
-          <MainButton handleClick={handleClickCamera} size={buttonSize} icon={<FaCamera size={buttonSize * 0.55} color='#FD9800' />} />
-          <MainButton handleClick={handleClick} size={buttonSize} icon={<FaGraduationCap size={buttonSize * 0.6} color='#FD9800' />} />
-        </div>
-      )}
-      {showForm && (
-        <div style={{ marginTop: '20px' }}>
-          <Card handleBackClick={handleBackClick}>
-            <div>
-              <h2>Image Upload</h2>
-              <br />
-              <div className="btn-container">
-                <input ref={filePickerRef} accept="image/*" onChange={handleImageChange} type="file" hidden />
-
-                <Button variant="outline-secondary" onClick={() => filePickerRef.current.click()}> Choose <FaCamera />  </Button>{' '}
-
-                {(imagePreview || videoPreview) && (
-                  <button style={{ marginBottom: '10px' }} className="btn" onClick={clearFiles}>x</button>
-                )}
+        <>
+          {showInstructions ? (
+            <div style={{ marginTop: '20px' }}>
+              <Card handleBackClick={handleBackClick}>
+                <Instructions />
+              </Card>
+            </div>
+          ) : (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', height: '90vh', alignItems: 'center', justifyContent: 'center' }}>
+                <MainButton handleClick={handleClickUpload} size={buttonSize} icon={<FaCloudUploadAlt size={buttonSize * 0.6} color='#FD9800' />} />
+                <MainButton handleClick={handleClickCamera} size={buttonSize} icon={<FaCamera size={buttonSize * 0.55} color='#FD9800' />} />
+                <MainButton handleClick={handleClick} size={buttonSize} icon={<FaGraduationCap size={buttonSize * 0.6} color='#FD9800' />} />
               </div>
-
-              <div className="preview" style={{ maxHeight: 'calc(100vh - 400px)', overflow: 'auto' }}>
-
-                {imagePreview != null && (
-                  <img src={imagePreview} alt="" style={{ maxWidth: '100%', maxHeight: '100%' }} />
-                )}
-                {videoPreview != null && (
-                  <video controls src={videoPreview} style={{ maxWidth: '100%', maxHeight: '100%' }}></video>
-                )}
-              </div>
-
-              <form onSubmit={handleSubmitCamera}>
-                <br />
-                <div className="button-group">
-                  <InputGroup className="mb-3">
-                    <InputGroup.Checkbox
-                      aria-label="Checkbox for following text input"
-                      checked={sizes['100']}
-                      onChange={(event) => handleChecked(event, 100)}
-                    />
-                    <Form.Control aria-label="Text input with checkbox" readOnly placeholder='100*100' />
-                  </InputGroup>
-                  <InputGroup className="mb-3">
-                    <InputGroup.Checkbox
-                      aria-label="Checkbox for following text input"
-                      checked={sizes['200']}
-                      onChange={(event) => handleChecked(event, 200)}
-                    />
-                    <Form.Control aria-label="Text input with checkbox" readOnly placeholder='200*200' />
-                  </InputGroup>
-                  <InputGroup className="mb-3">
-                    <InputGroup.Checkbox
-                      aria-label="Checkbox for following text input"
-                      checked={sizes['300']}
-                      onChange={(event) => handleChecked(event, 300)}
-                    />
-                    <Form.Control aria-label="Text input with checkbox" readOnly placeholder='300*300' />
-                  </InputGroup>
+              {/* {urlResponseShow && (
+                <div style={{ marginTop: '20px' }}>
+                  <Card handleBackClick={handleBackClick}>
+                    <div>
+                      <h2>Image Download Links</h2>
+                      <div className="urlDownloadLink">
+                        {urlResponse.map((url, index) => (
+                      
+                          <a href={url} key={url}> 
+                            {index + 1}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  </Card>
                 </div>
-                <Button className='submit-btn' type="submit" variant="warning" onClick={handleSubmit}>Submit</Button>
-              </form>
-              {urlResponseShow && (
-                <div className="urlDownloadLink">
-                  {urlResponse.map((url, index) => (
+              )} */}
+              {!urlResponseShow && showForm && (
+                <div style={{ marginTop: '20px' }}>
+                  <Card handleBackClick={handleBackClick}>
+                    <div>
+                      <h2>Image Upload</h2>
+                      <br />
+                      <div className="btn-container">
+                        <input ref={filePickerRef} accept="image/*" onChange={handleImageChange} type="file" hidden />
 
-                    <a href={url} key={url}>
-                      {index + 1}
-                    </a>
-                  ))}
+                        <Button variant="outline-secondary" onClick={() => filePickerRef.current.click()}> Choose <FaCamera />  </Button>{' '}
+
+                        {(imagePreview) && (
+                          <button style={{ marginBottom: '10px' }} className="btn" onClick={clearFiles}>x</button>
+                        )}
+                      </div>
+
+                      <div className="preview" style={{ maxHeight: 'calc(100vh - 400px)', overflow: 'auto' }}>
+                        {imagePreview != null && (
+                          <img src={imagePreview} alt="" style={{ maxWidth: '100%', maxHeight: '100%' }} />
+                        )}
+                        {videoPreview != null && (
+                          <video controls src={videoPreview} style={{ maxWidth: '100%', maxHeight: '100%' }}></video>
+                        )}
+                      </div>
+
+                      <form onSubmit={handleSubmitCamera}>
+                        <br />
+                        <div className="button-group">
+                          <InputGroup className="mb-3">
+                            <InputGroup.Checkbox
+                              aria-label="Checkbox for following text input"
+                              checked={sizes['100']}
+                              onChange={(event) => handleChecked(event, 100)}
+                            />
+                            <Form.Control aria-label="Text input with checkbox" readOnly placeholder='100*100' />
+                          </InputGroup>
+                          <InputGroup className="mb-3">
+                            <InputGroup.Checkbox
+                              aria-label="Checkbox for following text input"
+                              checked={sizes['200']}
+                              onChange={(event) => handleChecked(event, 200)}
+                            />
+                            <Form.Control aria-label="Text input with checkbox" readOnly placeholder='200*200' />
+                          </InputGroup>
+                          <InputGroup className="mb-3">
+                            <InputGroup.Checkbox
+                              aria-label="Checkbox for following text input"
+                              checked={sizes['300']}
+                              onChange={(event) => handleChecked(event, 300)}
+                            />
+                            <Form.Control aria-label="Text input with checkbox" readOnly placeholder='300*300' />
+                          </InputGroup>
+                        </div>
+                        <Button className='submit-btn' type="submit" variant="warning" onClick={handleSubmit}>Submit</Button>
+                      </form>
+
+
+                    </div>
+                  </Card>
                 </div>
               )}
-            </div>
-          </Card>
-        </div>
-      )}
-      {showComponent && (
-        <div style={{ marginTop: '20px' }}>
-          <Card handleBackClick={handleBackClick}>
-            <div>
-              <h2 style={{ marginBottom: '5px' }}>Take Photo</h2>
 
-              <Button variant="outline-secondary" onClick={handleCameraClick} > <FaCamera />  </Button>{' '}
+              {showComponent && (
+                <div style={{ marginTop: '20px' }}>
+                  <Card handleBackClick={handleBackClick}>
+                    <div>
+                      <h2 style={{ marginBottom: '5px' }}>Take Photo</h2>
+                      <Button variant="outline-secondary" onClick={handleCameraClick} > <FaCamera />  </Button>{' '}
+                      {cameraOpen && <CameraComp setCameraOpen={setCameraOpen} handleCameraUpload={handleCameraUpload} />}
 
-              {cameraOpen && <CameraComp setCameraOpen={setCameraOpen} handleCameraUpload={handleCameraUpload} />}
-
-              <form onSubmit={handleSubmit}>
-                <br></br>
-                <div className="button-group">
-                  <InputGroup className="mb-3">
-                    <InputGroup.Checkbox aria-label="Checkbox for following text input" />
-                    <Form.Control
-                      aria-label="Text input with checkbox"
-                      readOnly
-                      placeholder="100*100"
-                      value="100*100"
-                    />
-                  </InputGroup>
-                  <InputGroup className="mb-3">
-                    <InputGroup.Checkbox aria-label="Checkbox for following text input" />
-                    <Form.Control
-                      aria-label="Text input with checkbox"
-                      readOnly
-                      placeholder="200*200"
-                      value="200*200"
-                    />
-                  </InputGroup>
-                  <InputGroup className="mb-3">
-                    <InputGroup.Checkbox aria-label="Checkbox for following text input" />
-                    <Form.Control
-                      aria-label="Text input with checkbox"
-                      readOnly
-                      placeholder="300*300"
-                      value="300*300"
-                    />
-                  </InputGroup>
+                      <form onSubmit={handleSubmit}>
+                        <br></br>
+                        <div className="button-group">
+                          <InputGroup className="mb-3">
+                            <InputGroup.Checkbox
+                              aria-label="Checkbox for following text input"
+                              checked={sizes['100']}
+                              onChange={(event) => handleChecked(event, 100)}
+                            />
+                            <Form.Control aria-label="Text input with checkbox" readOnly placeholder='100*100' />
+                          </InputGroup>
+                          <InputGroup className="mb-3">
+                            <InputGroup.Checkbox
+                              aria-label="Checkbox for following text input"
+                              checked={sizes['200']}
+                              onChange={(event) => handleChecked(event, 200)}
+                            />
+                            <Form.Control aria-label="Text input with checkbox" readOnly placeholder='200*200' />
+                          </InputGroup>
+                          <InputGroup className="mb-3">
+                            <InputGroup.Checkbox
+                              aria-label="Checkbox for following text input"
+                              checked={sizes['300']}
+                              onChange={(event) => handleChecked(event, 300)}
+                            />
+                            <Form.Control aria-label="Text input with checkbox" readOnly placeholder='300*300' />
+                          </InputGroup>
+                        </div>
+                        <Button className='submit-btn' type="submit" variant="warning" onClick={handleSubmit}>Submit</Button>
+                      </form>
+                    </div>
+                  </Card>
                 </div>
-                <Button className='submit-btn' type="submit" variant="warning" onClick={handleSubmit}>Submit</Button>
-              </form>
-            </div>
-          </Card>
-        </div>
+              )}
+            </>
+          )}
+        </>
       )}
     </div>
   );
+
 };
 
 const MainButton = ({ handleClick, size, icon }) => {
@@ -558,11 +618,9 @@ const MainButton = ({ handleClick, size, icon }) => {
   );
 };
 
-
 const Card = ({ children, handleBackClick }) => {
   return (
     <>
-
       <div
         style={{
           width: '100%',
@@ -585,18 +643,22 @@ const Card = ({ children, handleBackClick }) => {
             background: '#fff',
             borderRadius: '8px',
             textAlign: 'center',
+            overflow: 'auto',
+            maxHeight: '80vh',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <samp onClick={handleBackClick} >X</samp>
+            <Button variant="outline-secondary" onClick={handleBackClick} style={{ fontSize: "15px" }}>X</Button>
           </div>
           {children}
-
         </div>
       </div>
     </>
   );
 };
+
+
+
 
 
 const Instructions = () => {
