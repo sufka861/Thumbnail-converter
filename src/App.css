@@ -1,16 +1,23 @@
 .App {
   text-align: center;
+  background-color:#282c3c;
 }
 
 .Header {
-  background-color: lightgray;
+  background-color:#282c3c;
   height: 10vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  border-bottom: solid;
-}
+  margin-bottom:1.5%;
+  }
+  .Logo {
+    margin-top: 5%;
+    max-width: 90%;
+    max-height: 90%;
 
+  }
+  
 .Header h1 {
   margin: 0;
 }
@@ -27,12 +34,11 @@
 
 .Main-Container {
   background-color: white;
-  height: 40%;
-  width: 80%;
+  height: 35%;
+  width: 75%;
   border-radius: 15px;
   margin: 5% auto;
-  align-items: center;
-  border: solid;
+  padding: 5%;
 }
 
 .urlDownloadLink {

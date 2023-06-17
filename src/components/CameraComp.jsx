@@ -2,12 +2,12 @@ import '../App.css';
 import Camera from 'react-html5-camera-photo';
 import 'react-html5-camera-photo/build/css/index.css';
 
-function CameraComp ({setCameraOpen}) {
+function CameraComp ({setCameraOpen, handleCameraUpload}) {
     function handleTakePhoto (dataUri) {
-        // Do stuff with the photo...
         console.log('takePhoto');
-        console.log(dataUri)
+        // console.log(dataUri)
         setCameraOpen(false)
+        handleCameraUpload(dataUri)
     }
 
     return (
