@@ -1,6 +1,6 @@
 # AWS Serverless Image Converter
 
-This pr
+This is a web app to convert images to thumbnails using AWS micro-services and Serverless architecture
 
 ## Instructions:
 To run this project locally:
