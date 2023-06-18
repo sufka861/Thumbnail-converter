@@ -7,7 +7,8 @@ import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 import Button from 'react-bootstrap/Button';
 import { BsArrowClockwise } from 'react-icons/bs';
-
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 
 
 const Main = () => {
@@ -426,6 +427,17 @@ const Main = () => {
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <Snackbar
+          open={openSnackbar}
+          autoHideDuration={3000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'center',
+          }}
+      >
+        <Alert severity={alertSeverity} variant="filled">{alertMsg}</Alert>
+      </Snackbar>
       {urlResponseShow ? (
         <div style={{ marginTop: '20px' }}>
           <Card handleBackClick={handleBackClick}>
