@@ -342,7 +342,9 @@ const Main = () => {
     setShowForm(false);
     setShowComponent(false);
     setOpenSnackbar(false);
+    setPrintUrl(false);
   };
+
 
   const handleClickUpload = () => {
     setShowForm(true);
@@ -561,7 +563,8 @@ const Main = () => {
                   <Card handleBackClick={handleBackClick}>
                     <div>
                       <h2 style={{ marginBottom: '5px' }}>Take Photo</h2>
-                      <Button variant="outline-secondary" onClick={handleCameraClick} > <FaCamera />  </Button>{' '}
+                      <br />
+                      <Button variant="outline-secondary" onClick={handleCameraClick} > <FaCamera size={24} />  </Button>{' '}
                       {cameraOpen && <CameraComp setCameraOpen={setCameraOpen} handleCameraUpload={handleCameraUpload} />}
 
                       <form onSubmit={handleSubmit}>
@@ -592,7 +595,7 @@ const Main = () => {
                             <Form.Control aria-label="Text input with checkbox" readOnly placeholder='300*300' />
                           </InputGroup>
                         </div>
-                        <Button className='submit-btn' type="submit" variant="warning" onClick={handleSubmit}>Submit</Button>
+                        <Button className='submit-btn' variant="warning" onClick={handleSubmit}>Choose size then take photo</Button>
                       </form>
                     </div>
                   </Card>
