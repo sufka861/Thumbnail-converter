@@ -43,11 +43,16 @@ const Main = () => {
     setBaseURL('https://sgm31cynbh.execute-api.eu-west-1.amazonaws.com/dev/thumbnails-source-bucket/');
   }, [image])
 
-  // useEffect(() => {
-  //   if (urlResponse)
-  //     setUrlResponseShow(true);
-  //   //GET THE PRESIGNED URL LINK ?????
-  // }, [urlResponse])
+  useEffect(()=>{
+    if (Object.values(sizes).every(value => value === false)) {
+      setSizes({
+        '100': true,
+        '200': false,
+        '300': false
+      })
+      console.log("SET SIZES TO DEFAULT 100")
+    }
+  },[sizes])
 
   const handleChecked = (event, id) => {
     console.log(sizes);
@@ -92,13 +97,7 @@ const Main = () => {
     let fileNameNoExtension = getFileWithNoExtension(fileName);
     const fileExtension = getFileExtension(fileName);
     let fileSizes = "-";
-    if (Object.values(sizes).every(value => value === false)) {
-      setSizes({
-        '100': true,
-        '200': false,
-        '300': false
-      })
-    }
+
     Object.keys(sizes).forEach((item, index, array) => {
       if (sizes[item] === true) {
         fileSizes += ((index + 1).toString())
